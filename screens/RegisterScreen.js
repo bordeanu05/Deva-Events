@@ -65,6 +65,7 @@ import {
                 email: email,
                 organizer: (organizer ? true : false),
                 favoriteEvents: [],
+                favoriteOfficialEvents: [],
             })
             .catch((error) => {
                 alert(error.message);
@@ -72,7 +73,15 @@ import {
         })
         .then(async () => {
             if (!signUpError) {
-                alert("Contul a fost creat cu succes!");
+                FIREBASE_AUTH.currentUser
+                .sendEmailVerification({
+                  handleCodeInApp: true,
+                  url: "https://devaevents-a3f03.firebaseapp.com",
+                })
+                .then(() => {
+                  alert("A fost trimis un email de verificare la adresa " + email + ".");
+                });
+                
                 await FIREBASE_AUTH.signOut();
                 navigation.pop(1);
             }

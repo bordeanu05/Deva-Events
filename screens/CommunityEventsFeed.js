@@ -5,6 +5,7 @@ import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/core";
 import { useState, useEffect } from "react";
+import { SelectList } from "react-native-dropdown-select-list";
 
 import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from "../FirebaseConfig";
 
@@ -13,9 +14,22 @@ import CommunityEventCard from '../components/CommunityEventCard';
 const CommunityEventsFeed = () => {
   const navigation = useNavigation();
   const [eventsData, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([eventsData]);
   const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState("Toate");
 
   const [refreshing, setRefreshing] = useState(false);
+
+  const categories = [
+    {key: "1", value: "Sport"},
+    {key: "2", value: "Cultural"},
+    {key: "3", value: "Educatie"},
+    {key: "4", value: "Social"},
+    {key: "5", value: "Sanatate"},
+    {key: "6", value: "Religie"},
+    {key: "7", value: "Voluntariat"},
+    {key: "8", value: "Toate"},
+];
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -53,6 +67,16 @@ const CommunityEventsFeed = () => {
     getEvents();
   }, [refreshing]);
 
+  useEffect(() => {
+    if (category === "Toate") {
+      setFilteredData(eventsData);
+    } else {
+      const filtered = eventsData.filter(item => item.category === category);
+      setFilteredData(filtered);
+    }
+  }
+  , [category, eventsData]);
+
   return (
     <View style={{ height: "100%" }}>
       <SafeAreaView style={{ flex: 1 }}>
@@ -60,20 +84,34 @@ const CommunityEventsFeed = () => {
 
         {eventsData.length === 0 ?
         (
-          <Text style={styles.title}>Nu ai creat niciun eveniment</Text>
+          <Text style={styles.title}>Nu exista evenimente inca</Text>
         ) : (
-          <FlatList
-            data={eventsData}
-            renderItem={renderItem}
-            keyExtractor={item => item.id.toString()}
-            style={{ flexGrow: 1, margin: 10, marginBottom: 80, width: "80%", alignSelf: "center" }}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
+          <View>
+            <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+              <SelectList
+                boxStyles={{ marginTop: 10, backgroundColor: "white", borderColor: "#2490ef", width: "65%", alignSelf: "center" }}
+                dropdownStyles={{ backgroundColor: "white", borderColor: "#2490ef", alignSelf: "center"}}
+                setSelected={setCategory}
+                onValueChange={(val) => setCategory(val)}
+                save="value"
+                data={categories}
+                placeholder={"Alege categoria dorita:"}
               />
-            }
-          />
+            </View>
+
+            <FlatList
+              data={filteredData}
+              renderItem={renderItem}
+              keyExtractor={item => item.id.toString()}
+              style={{ flexGrow: 1, margin: 10, marginBottom: 80, width: "80%", alignSelf: "center" }}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                />
+              }
+            />
+          </View>
         )}
 
       </SafeAreaView>

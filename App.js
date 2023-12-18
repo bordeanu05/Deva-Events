@@ -13,6 +13,7 @@ import ProfileScreen from "./screens/ProfileScreen";
 import CommunityEventsFeed from "./screens/CommunityEventsFeed";
 import CreateEventScreen from "./screens/CreateEventScreen";
 import EventCardDetailsScreen from "./screens/EventCardDetailsScreen";
+import OfficialEventCardDetailsScreen from "./screens/OfficialEventCardDetailsScreen";
 
 
 const Stack = createStackNavigator();
@@ -27,6 +28,7 @@ export default function App() {
         <Stack.Screen name="EventCardDetailsScreen" options={{headerShown: false}} component={EventCardDetailsScreen} />
         <Stack.Screen name="Register" options={{headerShown: false}} component={RegisterScreen} />
         <Stack.Screen name="Forgot" options={{headerShown: false}} component={ForgotScreen} />
+        <Stack.Screen name="OfficialEventCardDetailsScreen" options={{headerShown: false}} component={OfficialEventCardDetailsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

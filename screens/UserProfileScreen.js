@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { SectionList } from "react-native";
 
 import { useNavigation } from '@react-navigation/core';
 import { useState, useEffect } from 'react';
@@ -9,6 +10,7 @@ import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from "../FirebaseConfig";
 
 import { AuthContext } from '../screens/ProfileScreen';
 import CommunityAuxEventCard from '../components/CommunityAuxEventCard';
+import OfficialAuxEventCard from '../components/OfficialAuxEventCard';
 
 export default function UserProfileScreen(){
   const navigation = useNavigation();
@@ -16,6 +18,7 @@ export default function UserProfileScreen(){
   const { handleLogout } = useContext(AuthContext);
 
   const [favoriteEvents, setFavoriteEvents] = useState([]);
+  const [favoriteOfficialEvents, setFavoriteOfficialEvents] = useState([]);
   const [userData, setUserData] = useState('');
 
   const [refreshing, setRefreshing] = useState(false);
@@ -69,8 +72,38 @@ export default function UserProfileScreen(){
         // Handle the error appropriately
       }
     };
+
+    const getFavoriteOfficialEvents = async () => {
+      try {
+        // Assuming 'loggedInUser.uid' contains the current user's UID
+        const userDoc = await FIREBASE_FIRESTORE.collection("users").doc(FIREBASE_AUTH.currentUser.uid).get();
+        const userFavoriteOfficialEventIds = userDoc.data().favoriteOfficialEvents; // Replace 'favoriteEvents' with the correct field name
+  
+        if (userFavoriteOfficialEventIds && userFavoriteOfficialEventIds.length > 0) {
+          // Fetch events whose IDs are in the user's favorite events
+          const eventsPromises = userFavoriteOfficialEventIds.map(eventId =>
+            FIREBASE_FIRESTORE.collection("official_events").doc(eventId).get()
+          );
+  
+          const eventsDocs = await Promise.all(eventsPromises);
+          const favoriteOfficialEvents = eventsDocs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+  
+          setFavoriteOfficialEvents(favoriteOfficialEvents);
+        } else {
+          // Handle the case where there are no favorite events
+          setFavoriteOfficialEvents([]);
+        }
+      } catch (error) {
+        console.error("Error fetching favorite events: ", error);
+        // Handle the error appropriately
+      }
+    };
   
     getFavoriteEvents();
+    getFavoriteOfficialEvents();
   }, [refreshing]); // Add loggedInUser to the dependency array
   
 
@@ -83,6 +116,22 @@ export default function UserProfileScreen(){
       time={item.time}
       description={item.description}
     />
+  );
+
+  const renderOfficialItem = ({item}) => (
+    <OfficialAuxEventCard
+      date={item.date}
+      description={item.description}
+    />
+  );
+
+  const sections = [
+    { title: 'Evenimente Oficiale', data: favoriteOfficialEvents },
+    { title: 'Evenimente Comunitare', data: favoriteEvents },
+  ];
+
+  const renderSectionHeader = ({ section }) => (
+    <Text style={styles.sectionHeader}>{section.title}</Text>
   );
 
   return (
@@ -103,17 +152,24 @@ export default function UserProfileScreen(){
       {favoriteEvents.length === 0 ? (
         <Text style={styles.smallTitle}>Nu participi la niciun eveniment</Text>
       ) : (
-        <FlatList
-          data={favoriteEvents}
-          renderItem={renderItem}
-          keyExtractor={item => item.id.toString()}
-          style={{ flexGrow: 1, margin: 10, marginBottom: 170, width: "80%", alignSelf: "center" }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-            />
-          }
+          <SectionList
+            sections={sections}
+            keyExtractor={(item, index) => item.id + index}
+            renderItem={({ item, section }) => {
+              if (section.title === 'Evenimente Oficiale') {
+                return renderOfficialItem({ item });
+              } else {
+                return renderItem({ item });
+              }
+            }}
+            renderSectionHeader={renderSectionHeader}
+            style={{ flexGrow: 1, margin: 10, marginBottom: 120, width: "80%", alignSelf: "center" }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+              />
+            }
         />
       )}
     </SafeAreaView>
@@ -191,5 +247,16 @@ const styles = StyleSheet.create({
     textShadowColor: "#ccc",
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 2,
+  },
+  sectionHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    backgroundColor: '#ccc',
+    color: 'black',
+    padding: 10,
+    textShadowColor: "#ccc",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 2,
+    borderRadius: 10,
   },
 });

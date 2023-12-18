@@ -31,11 +31,23 @@ export default function ProfileScreen() {
 
     const handleLogin = async () => {
         setIsLoading(true);
+        let threwError = false;
         
         await FIREBASE_AUTH.signInWithEmailAndPassword(email, password)
         .catch(error => {
             alert(error.message);
+            threwError = true;
         });
+
+        if (!threwError) {
+            if(!FIREBASE_AUTH.currentUser.emailVerified){
+                alert("Verificați-vă email-ul pentru a putea continua!");
+                setLogged(false);
+            }
+            else{
+                setLogged(true);
+            }
+        }
 
         setIsLoading(false);
     }

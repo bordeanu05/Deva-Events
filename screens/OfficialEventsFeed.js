@@ -5,41 +5,48 @@ import { FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/core";
 import { useState, useEffect } from "react";
+import { FIREBASE_AUTH, FIREBASE_FIRESTORE } from "../FirebaseConfig";
 
 import OfficialEventCard from '../components/OfficialEventCard';
 
-const url = "http://192.168.1.105:8000/events";
+// const url = "http://192.168.1.129:8000/events";
 
 const OfficialEventsFeed = () => {
   const navigation = useNavigation();
   const [eventsData, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-        const data = [];
-        const response = await fetch(url);
-        const responseData = await response.json();
-        data.push(responseData);
-        const flatData = data.flat();
-        setData(flatData);
-        setLoading(false);
-    };
-
-    fetchData();
-  }, []);
+    const getEvents = async () => {
+      const querySnapshot = await FIREBASE_FIRESTORE.collection("official_events")
+        .get();
+      
+      const events = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+  
+      setData(events);
+      setLoading(false);
+    }
+    getEvents();
+  }, [refreshing]);
 
   const renderItem = ({ item }) => (
     <OfficialEventCard
         date={item.date}
         description={item.description}
         image_link={item.image_link}
+        attendees={item.attendees}
+        uniqueId={item.uniqueId}
     />
   );
 
   return (
     <View style={{ height: "100%" }}>
       <SafeAreaView style={{ flex: 1 }}>
+
         <Text style={styles.title}>Evenimente oficiale</Text>
         {eventsData.length === 0 && (
           <Text style={{ textAlign: "center" }}>Nu exista niciun eveniment oficial</Text>
