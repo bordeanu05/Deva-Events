@@ -115,6 +115,9 @@ export default function UserProfileScreen(){
       location={item.location}
       time={item.time}
       description={item.description}
+      userId={userData.userId}
+      uniqueId={item.uniqueId}
+      fullname={userData.lastname + " " + userData.firstname}
     />
   );
 
@@ -122,6 +125,9 @@ export default function UserProfileScreen(){
     <OfficialAuxEventCard
       date={item.date}
       description={item.description}
+      userId={userData.userId}
+      uniqueId={item.uniqueId}
+      fullname={userData.lastname + " " + userData.firstname}
     />
   );
 

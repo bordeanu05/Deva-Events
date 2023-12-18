@@ -1,13 +1,39 @@
 import React from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity, Alert } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 
-const CommunityAuxEventCard = ({name, category, date, location, time, description, attendees, uniqueId}) => {
+import { FIREBASE_AUTH, FIREBASE_FIRESTORE, firebase } from "../FirebaseConfig";
+
+const CommunityAuxEventCard = ({name, category, date, location, time, description, attendees, uniqueId, fullname, userId}) => {
   const navigation = useNavigation();
 
   return (
-    <View style={styles.container}>
+    <TouchableOpacity style={styles.container}
+      onLongPress={() => { Alert.alert("Anuleaza participarea", "Vrei sa anulezi participarea?", [
+        {
+          text: 'Nu',
+        },
+        {
+          text: 'Da', 
+          onPress: async () => {
+            // delete from user's favorite events
+            const userRef = FIREBASE_FIRESTORE.collection("users").doc(userId);
+            await userRef.update({
+              favoriteEvents: firebase.firestore.FieldValue.arrayRemove(uniqueId),
+            });
+            // delete from event's attendees
+            const userFullName = fullname;
+            const eventRef = FIREBASE_FIRESTORE.collection("events").doc(uniqueId);
+            await eventRef.update({
+              attendees: firebase.firestore.FieldValue.arrayRemove(userFullName),
+            });
+
+            alert("Ai anulat participarea!");
+          }
+        },
+      ], {cancelable: false}) }}
+    >
       <View style={styles.iconContainer}>
         <MaterialCommunityIcons name="calendar-month" size={24} color="white" />
       </View>
@@ -38,7 +64,7 @@ const CommunityAuxEventCard = ({name, category, date, location, time, descriptio
           </Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
